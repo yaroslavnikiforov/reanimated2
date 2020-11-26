@@ -7,6 +7,7 @@ import Animated, {
   withDecay,
 } from 'react-native-reanimated';
 import {PanGestureHandler} from 'react-native-gesture-handler';
+import {clamp, withBouncing} from 'react-native-redash';
 
 const {StatusBarManager} = NativeModules;
 
@@ -30,34 +31,29 @@ export default function App() {
       ctx.offsetY = translateY.value;
     },
     onActive: (event, ctx) => {
-      const newTranslateXValue = ctx.offsetX + event.translationX;
-      const newTranslateYValue = ctx.offsetY + event.translationY;
-
-      if (newTranslateXValue <= leftClamp) {
-        translateX.value = leftClamp;
-      } else if (newTranslateXValue >= rightClamp) {
-        translateX.value = rightClamp;
-      } else {
-        translateX.value = newTranslateXValue;
-      }
-
-      if (newTranslateYValue <= topClamp) {
-        translateY.value = topClamp;
-      } else if (newTranslateYValue >= bottomClamp) {
-        translateY.value = bottomClamp;
-      } else {
-        translateY.value = newTranslateYValue;
-      }
+      translateX.value = clamp(
+        ctx.offsetX + event.translationX,
+        leftClamp,
+        rightClamp,
+      );
+      translateY.value = clamp(
+        ctx.offsetY + event.translationY,
+        topClamp,
+        bottomClamp,
+      );
     },
     onEnd: (event, ctx) => {
-      translateX.value = withDecay({
-        velocity: event.velocityX,
-        clamp: [leftClamp, rightClamp],
-      });
-      translateY.value = withDecay({
-        velocity: event.velocityY,
-        clamp: [topClamp, bottomClamp],
-      });
+      translateX.value = withBouncing(
+        withDecay({velocity: event.velocityX}),
+        leftClamp,
+        rightClamp,
+      );
+
+      translateY.value = withBouncing(
+        withDecay({velocity: event.velocityY}),
+        topClamp,
+        bottomClamp,
+      );
     },
   });
 
